@@ -1,32 +1,68 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
+import { useState, useEffect, FormEvent } from 'react'
 import './App.css'
+
+interface Quote {
+  author: string
+  content: string
+  _id: string
+}
 
 function App() {
   const [count, setCount] = useState(0)
+  const [name, setName] = useState('');
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+
+  const [randomQuote, setRandomQuote] = useState<Quote | null>(null);
+
+  async function loadRandomQuote() {
+    const result = await fetch("https://usu-quotes-mimic.vercel.app/api/random");
+    const quote = await result.json();
+    console.log(quote)
+    setQuotes([quote]);
+  } 
+
+  useEffect(() => {
+    loadRandomQuote()
+  }, []);
+
+  async function submitRequest(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    console.log(name)
+    const search = "https://usu-quotes-mimic.vercel.app/api/search?query=" + name;
+    console.log(search)
+    const result2 = await fetch(search);
+    const resultsQuotes = await result2.json();
+    setQuotes(resultsQuotes.results)
+    console.log(resultsQuotes.results);
+  }
 
   return (
-    <div className="App">
+
+    <div>
+
+      <div className='title stuff-box'>
+        <h1>Quotable</h1>
+        <h3>Search Notable Quotes by Author</h3>
+      </div>
+
       <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <form onSubmit={e => submitRequest(e)}>
+          <input type="text" value={name} placeholder='Benjamin Franklin' onChange={e => setName(e.target.value)}/>
+        </form>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+
+      
+      <div>
+        {
+          quotes.map((quote) => (
+            <div key={quote._id} className='quote stuff-box'>
+              <h2>{quote.content}</h2>
+              <h4>--{quote.author}</h4>
+            </div>
+          ))
+        }
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+
     </div>
   )
 }
